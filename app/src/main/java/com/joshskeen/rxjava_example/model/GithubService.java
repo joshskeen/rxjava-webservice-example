@@ -17,12 +17,7 @@ public class GithubService implements GithubAPIInterface {
     public static GithubService getInstance() {
         GithubAPIInterface githubAPI = new RestAdapter.Builder()
                 .setEndpoint(ENDPOINT)
-                .setLog(new RestAdapter.Log() {
-                    @Override
-                    public void log(String message) {
-                        System.out.println(message);
-                    }
-                })
+                .setLog(message -> System.out.println(message))
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .build()
                 .create(GithubAPIInterface.class);
