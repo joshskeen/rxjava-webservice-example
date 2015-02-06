@@ -8,6 +8,8 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class GithubServiceManager {
@@ -34,23 +36,23 @@ public class GithubServiceManager {
                 for (GithubUserDetail githubUserDetail : githubUserDetails) {
                     //request a detail object for that user
                     mService.requestUserDetails(githubUserDetail.mLogin,
-                                                new Callback<GithubUserDetail>() {
-                        @Override
-                        public void success(GithubUserDetail githubUserDetail,
-                                            Response response) {
-                            Timber.i("User Detail request completed for user : " + githubUserDetail.mLogin);
-                            githubUserDetails.add(githubUserDetail);
-                            if (githubUserDetails.size() == githubUsersResponse.mGithubUsers.size()) {
-                                //we've downloaded'em all - notify all who are interested!
-                                mBus.post(new UserDetailsLoadedCompleteEvent(githubUserDetails));
-                            }
-                        }
+                            new Callback<GithubUserDetail>() {
+                                @Override
+                                public void success(GithubUserDetail githubUserDetail,
+                                                    Response response) {
+                                    Timber.i("User Detail request completed for user : " + githubUserDetail.mLogin);
+                                    githubUserDetails.add(githubUserDetail);
+                                    if (githubUserDetails.size() == githubUsersResponse.mGithubUsers.size()) {
+                                        //we've downloaded'em all - notify all who are interested!
+                                        mBus.post(new UserDetailsLoadedCompleteEvent(githubUserDetails));
+                                    }
+                                }
 
-                        @Override
-                        public void failure(RetrofitError error) {
-                            Timber.e("Request User Detail Failed!!!!", error);
-                        }
-                    });
+                                @Override
+                                public void failure(RetrofitError error) {
+                                    Timber.e("Request User Detail Failed!!!!", error);
+                                }
+                            });
                 }
             }
 
@@ -61,33 +63,22 @@ public class GithubServiceManager {
         });
     }
 
-
-
-    //The RXJava Way
-    private Observable<GithubUser> rxFetchUsers() {
-        return mService.rxRequestUsers()
-                .concatMap(githubUsersResponse ->
-                        Observable.from(githubUsersResponse.mGithubUsers)).doOnError(throwable -> {
-                            Timber.e("githubUsersResponse exception", throwable);
-                        });
-    }
-
-    private Observable<GithubUserDetail> rxFetchDetails() {
-        return rxFetchUsers()
-                .concatMap((GithubUser githubUser) -> mService.rxRequestUserDetails(githubUser.mLogin)).doOnError(throwable -> {
-                    Timber.e("userDetailsResponse exception", throwable);
-                });
-    }
-
     public void rxFetchUserDetails() {
-        rxFetchDetails().cache().toList().subscribe(githubUserDetails -> {
-            Timber.i("Got " + githubUserDetails.size() + " user details", githubUserDetails);
+        //request the users
+        mService.rxRequestUsers().concatMap(Observable::from)
+        .concatMap((GithubUser githubUser) ->
+                        //request the details for each user
+                        mService.rxRequestUserDetails(githubUser.mLogin)
+        )
+        //accumulate them as a list
+        .toList()
+        .subscribeOn(Schedulers.newThread())
+        .observeOn(AndroidSchedulers.mainThread())
+        //post them on the eventbus
+        .subscribe(githubUserDetails -> {
             EventBus.getDefault().post(new UserDetailsLoadedCompleteEvent(githubUserDetails));
-        },
-        throwable -> Timber.e("Request User Failed!!!!", throwable));
+        });
     }
-
-
 
 
 }

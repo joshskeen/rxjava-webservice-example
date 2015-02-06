@@ -1,5 +1,7 @@
 package com.joshskeen.rxjava_example.model;
 
+import java.util.List;
+
 import retrofit.Callback;
 import retrofit.http.GET;
 import retrofit.http.Path;
@@ -10,12 +12,18 @@ interface GithubAPIInterface {
     @GET("/users/{username}")
     public void requestUserDetails(@Path("username") String username, Callback<GithubUserDetail> callback);
 
-    @GET("/users")
-    public void requestUsers(Callback<GithubUsersResponse> callback);
+
 
     @GET("/users/{username}")
     public Observable<GithubUserDetail> rxRequestUserDetails(@Path("username") String username);
 
     @GET("/users")
-    public Observable<GithubUsersResponse> rxRequestUsers();
+    public void requestUsers(Callback<GithubUsersResponse> callback);
+
+    @GET("/users")
+    List<GithubUser> requestUsers();
+
+    @GET("/users")
+    public Observable<List<GithubUser>> rxRequestUsers();
+
 }

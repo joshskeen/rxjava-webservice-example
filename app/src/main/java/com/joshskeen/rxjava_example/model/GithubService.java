@@ -1,5 +1,7 @@
 package com.joshskeen.rxjava_example.model;
 
+import java.util.List;
+
 import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.http.Path;
@@ -7,6 +9,7 @@ import rx.Observable;
 
 public class GithubService implements GithubAPIInterface {
     public static String ENDPOINT = "https://api.github.com";
+
     private GithubAPIInterface mGithubAPI;
 
 
@@ -15,33 +18,36 @@ public class GithubService implements GithubAPIInterface {
     }
 
     public static GithubService getInstance() {
-        GithubAPIInterface githubAPI = new RestAdapter.Builder()
+        RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(ENDPOINT)
                 .setLog(message -> System.out.println(message))
                 .setLogLevel(RestAdapter.LogLevel.FULL)
-                .build()
-                .create(GithubAPIInterface.class);
-        return new GithubService(githubAPI);
+                .build();
+        return new GithubService(restAdapter.create(GithubAPIInterface.class));
     }
 
     @Override
     public void requestUserDetails(@Path("username") String username, Callback<GithubUserDetail> callback) {
-        getInstance().requestUserDetails(username, callback);
+        mGithubAPI.requestUserDetails(username, callback);
     }
 
     @Override
     public void requestUsers(Callback<GithubUsersResponse> callback) {
-        getInstance().requestUsers(callback);
+        mGithubAPI.requestUsers(callback);
     }
 
     @Override
     public Observable<GithubUserDetail> rxRequestUserDetails(@Path("username") String username) {
-        return getInstance().rxRequestUserDetails(username);
+        return mGithubAPI.rxRequestUserDetails(username);
     }
 
     @Override
-    public Observable<GithubUsersResponse> rxRequestUsers() {
-        return getInstance().rxRequestUsers();
+    public Observable<List<GithubUser>> rxRequestUsers() {
+        return mGithubAPI.rxRequestUsers();
     }
 
+    @Override
+    public List<GithubUser> requestUsers(){
+        return mGithubAPI.requestUsers();
+    }
 }
