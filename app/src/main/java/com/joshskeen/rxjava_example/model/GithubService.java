@@ -7,11 +7,11 @@ import retrofit.RestAdapter;
 import retrofit.http.Path;
 import rx.Observable;
 
-public class GithubService implements GithubAPIInterface {
+public class GithubService {
+    public static final int PER_PAGE = 1;
     public static String ENDPOINT = "https://api.github.com";
 
     private GithubAPIInterface mGithubAPI;
-
 
     public GithubService(GithubAPIInterface githubAPI) {
         mGithubAPI = githubAPI;
@@ -20,34 +20,25 @@ public class GithubService implements GithubAPIInterface {
     public static GithubService getInstance() {
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(ENDPOINT)
-                .setLog(message -> System.out.println(message))
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .build();
         return new GithubService(restAdapter.create(GithubAPIInterface.class));
     }
 
-    @Override
     public void requestUserDetails(@Path("username") String username, Callback<GithubUserDetail> callback) {
         mGithubAPI.requestUserDetails(username, callback);
     }
 
-    @Override
-    public void requestUsers(Callback<GithubUsersResponse> callback) {
-        mGithubAPI.requestUsers(callback);
+    public void requestUsers(Callback<List<GithubUser>> callback) {
+        mGithubAPI.requestUsers(PER_PAGE, callback);
     }
 
-    @Override
     public Observable<GithubUserDetail> rxRequestUserDetails(@Path("username") String username) {
         return mGithubAPI.rxRequestUserDetails(username);
     }
 
-    @Override
     public Observable<List<GithubUser>> rxRequestUsers() {
-        return mGithubAPI.rxRequestUsers();
+        return mGithubAPI.rxRequestUsers(PER_PAGE);
     }
 
-    @Override
-    public List<GithubUser> requestUsers(){
-        return mGithubAPI.requestUsers();
-    }
 }

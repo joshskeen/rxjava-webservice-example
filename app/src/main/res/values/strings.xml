@@ -3,4 +3,6 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="rx_button_text">launch Rx Version</string>
+    <string name="got">Got:</string>
 </resources>
